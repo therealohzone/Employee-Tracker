@@ -86,3 +86,71 @@ function viewEmployees() {
     });
 };
 
+function addDepartment() {
+    inquirer
+        .prompt({
+            name: "department",
+            type: "input",
+            message: "What is the name of this department?",
+        })
+        .then(function(answer) {
+            var query = "INSERT INTO department (name) VALUES ( ? )";
+            connection.query(query, answer.department, function(err, res) {
+                console.log(`You have added this department: ${(answer.department).toUpperCase()}.`)
+            })
+            viewDepartments();
+        })
+}
+
+function addRole() {
+    connection.query('SELECT * FROM department', function(err, res) {
+        if (err) throw (err);
+        inquirer
+            .prompt([{
+                    name: "title",
+                    type: "input",
+                    message: "What is the title of this role?",
+                },
+                {
+                    name: "salary",
+                    type: "input",
+                    message: "What is the salary of this role?",
+                },
+                {
+                    name: "departmentName",
+                    type: "list",
+                    message: "Which department is this role in?",
+                    choices: function() {
+                        var choicesArray = [];
+                        res.forEach(res => {
+                            choicesArray.push(
+                                res.name
+                            );
+                        })
+                        return choicesArray;
+                    }
+                }
+            ])
+
+        .then(function(answer) {
+            const department = answer.departmentName;
+            connection.query('SELECT * FROM DEPARTMENT', function(err, res) {
+
+                if (err) throw (err);
+                let filteredDept = res.filter(function(res) {
+                    return res.name == department;
+                })
+                let id = filteredDept[0].id;
+                let query = "INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)";
+                let values = [answer.title, parseInt(answer.salary), id]
+                console.log(values);
+                connection.query(query, values,
+                    function(err, res, fields) {
+                        console.log(`You have added this role: ${(values[0]).toUpperCase()}.`)
+                    })
+                viewRoles()
+            })
+        })
+    })
+}
+
